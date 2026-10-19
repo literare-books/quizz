@@ -588,25 +588,28 @@
     momentoCarreiraSolo: 'momentoCarreira', momentoCarreiraCoautoria: 'momentoCarreira', momentoCarreiraComum: 'momentoCarreira',
     motivacaoSolo: 'motivacao', motivacaoCoautoria: 'motivacao', motivacaoComum: 'motivacao',
     areaAtuacaoSolo: 'areaAtuacao', areaAtuacaoCoautoria: 'areaAtuacao', areaAtuacaoComum: 'areaAtuacao',
-    tempoAtuacaoSolo: 'tempoAtuacao', tempoAtuacaoCoautoria: 'tempoAtuacao', tempoAtuacaoComum: 'tempoAtuacao'
+    tempoAtuacaoSolo: 'tempoAtuacao', tempoAtuacaoCoautoria: 'tempoAtuacao', tempoAtuacaoComum: 'tempoAtuacao',
+    investimentoSolo: 'investimento', investimentoCoautoria: 'investimento',
+    prazoContratacaoSolo: 'prazo', prazoCoautoria: 'prazo',
+    estagioEscritaSolo: 'estagioEscrita', preparacaoCoautoria: 'estagioEscrita'
   };
 
   function computeClassificacao(a){
     var viaCoautoria = (a.formato === FORMATO_COAUTORIA) || !!a.trocadoParaCoautoria;
 
     if (viaCoautoria) {
-      if (a.investimentoCoautoria === undefined) return null;
-      if (a.investimentoCoautoria === COAUTORIA_ORCAMENTO_ZERO) return 'Lead Desqualificado';
-      var prazoOkC = COAUTORIA_PRAZO_CURTO.indexOf(a.prazoCoautoria) !== -1;
-      var orcamentoAltoC = COAUTORIA_ORCAMENTO_ALTO.indexOf(a.investimentoCoautoria) !== -1;
+      if (a.investimento === undefined) return null;
+      if (a.investimento === COAUTORIA_ORCAMENTO_ZERO) return 'Lead Desqualificado';
+      var prazoOkC = COAUTORIA_PRAZO_CURTO.indexOf(a.prazo) !== -1;
+      var orcamentoAltoC = COAUTORIA_ORCAMENTO_ALTO.indexOf(a.investimento) !== -1;
       return (orcamentoAltoC && prazoOkC) ? 'Lead Bom Coautoria' : 'Lead Morno Coautoria';
     }
 
     if (a.formato === FORMATO_SOLO) {
-      if (a.investimentoSolo === undefined) return null;
-      var prazoOkS = SOLO_PRAZO_CURTO.indexOf(a.prazoContratacaoSolo) !== -1;
+      if (a.investimento === undefined) return null;
+      var prazoOkS = SOLO_PRAZO_CURTO.indexOf(a.prazo) !== -1;
       var decisorOkS = a.decisorSolo === SOLO_DECISOR_CONFIRMADO;
-      var orcamentoAltoS = SOLO_ORCAMENTO_ALTO.indexOf(a.investimentoSolo) !== -1;
+      var orcamentoAltoS = SOLO_ORCAMENTO_ALTO.indexOf(a.investimento) !== -1;
       return (orcamentoAltoS && prazoOkS && decisorOkS) ? 'Lead Quente Solo' : 'Lead Morno Solo';
     }
 
@@ -672,7 +675,7 @@
     delete answers.investimentoComum; // só servia pra decidir o fluxo, não é campo final
     if (SOLO_INVESTIMENTO_TODAS.indexOf(valor) !== -1) {
       answers.formato = FORMATO_SOLO;
-      answers.investimentoSolo = valor;
+      answers.investimento = valor;
       if (SOLO_ORCAMENTO_BAIXO_TROCA.indexOf(valor) !== -1) {
         answers.trocadoParaCoautoria = true;
         path = pathSoFar.concat(transicaoSteps, coautoriaSteps.slice(4), finalSteps);
@@ -681,7 +684,7 @@
       }
     } else if (COAUTORIA_INVESTIMENTO_TODAS.indexOf(valor) !== -1) {
       answers.formato = FORMATO_COAUTORIA;
-      answers.investimentoCoautoria = valor;
+      answers.investimento = valor;
       path = pathSoFar.concat([coautoriaSteps[4]], coautoriaSteps.slice(6, 8), finalSteps);
     }
     rebuildProgressDots();
