@@ -943,7 +943,11 @@
   // Lead sem orçamento nem pra coautoria: não vai pro CRM, não pede mais
   // dados, não redireciona pro WhatsApp — só agradece e encerra ali.
   function endDisqualified(){
-    finished = true;
+    // Mesmo desqualificado, o lead vai pro CRM — só que marcado como tal
+    // (classificacao: "Lead Desqualificado"), pra quem for filtrar lá saber
+    // separar. O que muda é só a experiência aqui na tela: sem redirect
+    // pro WhatsApp, sem pedir o resto dos dados.
+    sendCompleted();
     form.style.display = 'none';
     progressEl.style.display = 'none';
     disqualifiedEl.classList.add('active');
