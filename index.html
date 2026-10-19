@@ -1,0 +1,954 @@
+<meta charset="utf-8">
+<title>Quiz Solo e Coautoria</title>
+<meta name="description" content="Quiz de qualificação de leads com ramificação entre os fluxos de Livro Solo e Coautoria da Literare Books.">
+<style>
+  :root{
+    color-scheme: light;
+    --cover:#FFFFFF;
+    --cover-2:#FBF4DF;
+    --paper:#FFFFFF;
+    --paper-2:#FAFAF8;
+    --ink:#231F20;
+    --ink-soft:#6B6866;
+    --accent:#F9B308;
+    --accent-ink:#8A5E00;
+    --line:#E9E6E0;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--cover);
+    background-image:
+      radial-gradient(900px 420px at 12% -8%, var(--cover-2), transparent 60%),
+      radial-gradient(700px 420px at 108% 105%, var(--cover-2), transparent 55%);
+    color:var(--ink);
+    font-family:"Montserrat", system-ui, sans-serif;
+    min-height:100%;
+    padding:40px 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  h1,h2,h3{font-family:"Montserrat", system-ui, sans-serif; font-weight:700; text-wrap:balance; margin:0;}
+
+  .shell{width:100%; max-width:720px;}
+
+  .brand{
+    display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:22px;
+  }
+  .brand .mark{width:4px; height:30px; background:var(--accent); border-radius:2px;}
+  .brand .word{font-family:"Montserrat", sans-serif; font-weight:700; font-size:1.15rem; line-height:1.05; color:var(--ink);}
+  .brand .word small{display:block; font-size:.52rem; letter-spacing:.14em; font-weight:700; color:var(--accent-ink); text-transform:uppercase;}
+
+  .eyebrow{
+    color:var(--accent-ink); opacity:.9; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase;
+    text-align:center; margin-bottom:14px; font-weight:700;
+  }
+
+  .book{
+    background:var(--paper);
+    border-radius:18px;
+    box-shadow: 0 24px 50px -24px rgba(35,31,32,.28);
+    border:1px solid var(--line);
+    overflow:hidden;
+    position:relative;
+  }
+  .book::before{
+    content:"";
+    position:absolute; left:0; top:0; right:0; height:6px;
+    background:var(--accent);
+  }
+
+  .progress{
+    display:flex; gap:4px; padding:22px 28px 0 34px;
+  }
+  .progress i{
+    flex:1; height:4px; border-radius:4px; background:var(--line);
+    transition:background .25s ease;
+  }
+  .progress i.on{background:var(--accent);}
+
+  form{padding:26px 34px 32px;}
+  .step{display:none;}
+  .step.active{display:block; animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .kicker{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink); font-weight:700; margin-bottom:8px;}
+  .step h2{font-size:1.4rem; line-height:1.3; margin-bottom:6px;}
+  .step p.sub{color:var(--ink-soft); font-size:.95rem; margin:0 0 22px; max-width:50ch;}
+
+  label.field{display:block; margin-bottom:16px;}
+  label.field span{display:block; font-size:.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);}
+  input[type=text], input[type=email], input[type=tel], textarea, select{
+    width:100%; font:inherit; font-size:1rem; padding:12px 14px;
+    border:1px solid var(--line); border-radius:10px; background:var(--paper-2); color:var(--ink);
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  textarea{resize:vertical; min-height:72px;}
+
+  .choices{display:grid; gap:10px; margin-top:18px;}
+  .choices.two-col{grid-template-columns:1fr 1fr;}
+  @media (max-width:480px){.choices.two-col{grid-template-columns:1fr;}}
+
+  .choice{
+    position:relative; border:1px solid var(--line); border-radius:12px; padding:13px 16px;
+    background:var(--paper-2); cursor:pointer; font-size:.95rem; transition:border-color .15s, background .15s;
+  }
+  .choice:hover{border-color:var(--accent);}
+  .choice input{position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer;}
+  .choice.checked{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 18%, var(--paper-2)); color:var(--ink); font-weight:700;}
+
+  .consent{
+    display:flex; gap:10px; align-items:flex-start; border:1px solid var(--line); border-radius:12px;
+    padding:13px 16px; background:var(--paper-2); margin-top:4px;
+  }
+  .consent input{margin-top:3px; width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;}
+  .consent span{font-size:.85rem; color:var(--ink-soft); line-height:1.4;}
+
+  .nav{display:flex; justify-content:space-between; align-items:center; margin-top:26px; gap:12px;}
+  button{
+    font-family:"Montserrat", sans-serif; font-weight:700; border:none; border-radius:999px; padding:13px 26px; cursor:pointer;
+    font-size:.95rem; transition:transform .1s ease, opacity .15s ease, box-shadow .15s ease;
+  }
+  button:active{transform:scale(.98);}
+  .btn-primary{background:var(--accent); color:#231F20; box-shadow:0 10px 20px -10px rgba(249,179,8,.7);}
+  .btn-primary:disabled{opacity:.4; cursor:not-allowed; box-shadow:none;}
+  .btn-ghost{background:transparent; color:var(--ink-soft);}
+  .btn-ghost:hover{color:var(--ink);}
+
+  .result{padding:54px 34px 46px; display:none; text-align:center;}
+  .result.active{display:block;}
+  .result h2{font-size:1.3rem; min-height:2.6em; display:flex; align-items:center; justify-content:center;}
+  .result h2.swap{animation:swap .45s ease;}
+  @keyframes swap{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  .loader{display:flex; justify-content:center; gap:10px; margin-bottom:22px;}
+  .loader i{
+    width:12px; height:12px; border-radius:50%; background:var(--accent);
+    animation:bounce 1s ease-in-out infinite;
+  }
+  .loader i:nth-child(2){animation-delay:.15s;}
+  .loader i:nth-child(3){animation-delay:.3s;}
+  @keyframes bounce{
+    0%, 80%, 100%{transform:scale(.6); opacity:.5;}
+    40%{transform:scale(1); opacity:1;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .loader i{animation:none; opacity:.9;}
+    .result h2.swap{animation:none;}
+  }
+
+  .foot-note{font-size:.78rem; color:var(--ink-soft); text-align:center; margin-top:8px;}
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
+
+<div class="shell">
+  <div class="brand">
+    <span class="mark"></span>
+    <span class="word">Literare Books<small>Brasil · Europa · USA · Japão</small></span>
+  </div>
+  <div class="eyebrow">Quero publicar um livro</div>
+  <div class="book">
+    <div class="progress" id="progress"></div>
+
+    <form id="quiz" novalidate>
+
+      <!-- Contato inicial — só o essencial, pra recuperar o lead se ele abandonar -->
+      <div class="step active" data-contact-intro="true">
+        <div class="kicker">Vamos começar</div>
+        <h2>Antes de tudo, como podemos te chamar?</h2>
+        <p class="sub">Só pra te identificar — o resto da conversa vem a seguir.</p>
+        <label class="field"><span>Nome completo</span>
+          <input type="text" name="nome" required autocomplete="name" placeholder="Seu nome">
+        </label>
+        <label class="field"><span>WhatsApp com DDD</span>
+          <input type="tel" name="telefone" required autocomplete="tel" placeholder="(11) 90000-0000">
+        </label>
+      </div>
+
+      <!-- Roteador -->
+      <div class="step" data-step0="true" data-pure-choice="true">
+        <div class="kicker">Vamos começar</div>
+        <h2>Como você gostaria de publicar seu livro?</h2>
+        <p class="sub">Seu conhecimento merece se transformar em um livro. Descubra o melhor caminho para publicar sua obra, fortalecer sua autoridade e ampliar suas oportunidades profissionais.</p>
+        <div class="choices" data-group="formato">
+          <label class="choice"><input type="radio" name="formato" value="Livro solo: quero publicar uma obra de minha autoria, com meu nome na capa." required><span>Livro solo: quero publicar uma obra de minha autoria, com meu nome na capa.</span></label>
+          <label class="choice"><input type="radio" name="formato" value="Coautoria: quero escrever um capítulo em um livro compartilhado com outros profissionais."><span>Coautoria: quero escrever um capítulo em um livro compartilhado com outros profissionais.</span></label>
+          <label class="choice"><input type="radio" name="formato" value="Ainda não sei qual formato é ideal para mim."><span>Ainda não sei qual formato é ideal para mim.</span></label>
+        </div>
+      </div>
+
+      <!-- ===================== FLUXO A — LIVRO SOLO ===================== -->
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 1 de 9</div>
+        <h2>Em qual momento da sua carreira você está atualmente?</h2>
+        <div class="choices" data-group="momentoCarreiraSolo">
+          <label class="choice"><input type="radio" name="momentoCarreiraSolo" value="Estou consolidado na minha área e sou reconhecido como referência." required><span>Estou consolidado na minha área e sou reconhecido como referência.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraSolo" value="Tenho uma carreira estabelecida, mas quero ampliar minha autoridade e visibilidade."><span>Tenho uma carreira estabelecida, mas quero ampliar minha autoridade e visibilidade.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraSolo" value="Estou em fase de crescimento e quero me diferenciar profissionalmente."><span>Estou em fase de crescimento e quero me diferenciar profissionalmente.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraSolo" value="Estou em transição de carreira ou iniciando uma nova fase."><span>Estou em transição de carreira ou iniciando uma nova fase.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraSolo" value="Já encerrei minha carreira profissional e desejo compartilhar meu legado."><span>Já encerrei minha carreira profissional e desejo compartilhar meu legado.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 2 de 9</div>
+        <h2>Qual é sua principal motivação para publicar um livro?</h2>
+        <div class="choices" data-group="motivacaoSolo">
+          <label class="choice"><input type="radio" name="motivacaoSolo" value="Tornar-me uma autoridade reconhecida na minha área de atuação." required><span>Tornar-me uma autoridade reconhecida na minha área de atuação.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoSolo" value="Atrair mais clientes, pacientes ou oportunidades de negócios."><span>Atrair mais clientes, pacientes ou oportunidades de negócios.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoSolo" value="Compartilhar meu conhecimento e impactar outras pessoas."><span>Compartilhar meu conhecimento e impactar outras pessoas.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoSolo" value="Fortalecer minha marca pessoal e conquistar palestras e eventos."><span>Fortalecer minha marca pessoal e conquistar palestras e eventos.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoSolo" value="Realizar um sonho pessoal ou deixar um legado."><span>Realizar um sonho pessoal ou deixar um legado.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 3 de 9</div>
+        <h2>Em qual área você atua profissionalmente?</h2>
+        <div class="choices" data-group="areaAtuacaoSolo">
+          <label class="choice"><input type="radio" name="areaAtuacaoSolo" value="Medicina e demais áreas da saúde." required><span>Medicina e demais áreas da saúde.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoSolo" value="Psicologia, neurodiversidade e terapias."><span>Psicologia, neurodiversidade e terapias.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoSolo" value="Negócios, empreendedorismo e liderança."><span>Negócios, empreendedorismo e liderança.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoSolo" value="Educação e desenvolvimento humano."><span>Educação e desenvolvimento humano.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoSolo" value="Direito, finanças ou consultoria."><span>Direito, finanças ou consultoria.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoSolo" value="Outra área."><span>Outra área.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 4 de 9</div>
+        <h2>Há quanto tempo você atua profissionalmente em sua área?</h2>
+        <div class="choices" data-group="tempoAtuacaoSolo">
+          <label class="choice"><input type="radio" name="tempoAtuacaoSolo" value="Menos de 3 anos." required><span>Menos de 3 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoSolo" value="De 3 a 5 anos."><span>De 3 a 5 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoSolo" value="De 6 a 10 anos."><span>De 6 a 10 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoSolo" value="De 11 a 20 anos."><span>De 11 a 20 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoSolo" value="Mais de 20 anos."><span>Mais de 20 anos.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 5 de 9</div>
+        <h2>Em qual estágio está a escrita do seu livro?</h2>
+        <div class="choices" data-group="estagioEscritaSolo">
+          <label class="choice"><input type="radio" name="estagioEscritaSolo" value="Meu livro já está completamente escrito." required><span>Meu livro já está completamente escrito.</span></label>
+          <label class="choice"><input type="radio" name="estagioEscritaSolo" value="Meu livro está parcialmente escrito e preciso concluí-lo."><span>Meu livro está parcialmente escrito e preciso concluí-lo.</span></label>
+          <label class="choice"><input type="radio" name="estagioEscritaSolo" value="Ainda não comecei, mas pretendo escrevê-lo nos próximos 2 meses."><span>Ainda não comecei, mas pretendo escrevê-lo nos próximos 2 meses.</span></label>
+          <label class="choice"><input type="radio" name="estagioEscritaSolo" value="Ainda não comecei, mas pretendo escrevê-lo nos próximos 6 meses."><span>Ainda não comecei, mas pretendo escrevê-lo nos próximos 6 meses.</span></label>
+          <label class="choice"><input type="radio" name="estagioEscritaSolo" value="Ainda não comecei, mas pretendo escrevê-lo nos próximos 12 meses."><span>Ainda não comecei, mas pretendo escrevê-lo nos próximos 12 meses.</span></label>
+          <label class="choice"><input type="radio" name="estagioEscritaSolo" value="Tenho uma ideia, mas ainda não defini quando começarei a escrever."><span>Tenho uma ideia, mas ainda não defini quando começarei a escrever.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 6 de 9</div>
+        <h2>Qual é o principal desafio que você enfrenta para publicar seu livro?</h2>
+        <div class="choices" data-group="desafioSolo">
+          <label class="choice"><input type="radio" name="desafioSolo" value="Encontrar uma editora profissional e confiável." required><span>Encontrar uma editora profissional e confiável.</span></label>
+          <label class="choice"><input type="radio" name="desafioSolo" value="Organizar e transformar meu conhecimento em um livro."><span>Organizar e transformar meu conhecimento em um livro.</span></label>
+          <label class="choice"><input type="radio" name="desafioSolo" value="Ter tempo e orientação para concluir a escrita."><span>Ter tempo e orientação para concluir a escrita.</span></label>
+          <label class="choice"><input type="radio" name="desafioSolo" value="Compreender os custos e as etapas de publicação."><span>Compreender os custos e as etapas de publicação.</span></label>
+          <label class="choice"><input type="radio" name="desafioSolo" value="Conseguir divulgação e visibilidade para minha obra."><span>Conseguir divulgação e visibilidade para minha obra.</span></label>
+          <label class="choice"><input type="radio" name="desafioSolo" value="Não tenho dificuldades específicas, quero começar."><span>Não tenho dificuldades específicas, quero começar.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 7 de 9</div>
+        <h2>Quanto você tem disponível para investir na publicação do seu livro?</h2>
+        <div class="choices" data-group="investimentoSolo">
+          <label class="choice"><input type="radio" name="investimentoSolo" value="De R$ 40.001 a R$ 50.000." required><span>De R$ 40.001 a R$ 50.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoSolo" value="De R$ 30.001 a R$ 40.000."><span>De R$ 30.001 a R$ 40.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoSolo" value="De R$ 20.001 a R$ 30.000."><span>De R$ 20.001 a R$ 30.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoSolo" value="Até R$ 20.000."><span>Até R$ 20.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoSolo" value="Não tenho condições de investir no projeto neste momento."><span>Não tenho condições de investir no projeto neste momento.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 8 de 9</div>
+        <h2>Quando você pretende iniciar seu projeto de publicação com uma editora?</h2>
+        <div class="choices" data-group="prazoContratacaoSolo">
+          <label class="choice"><input type="radio" name="prazoContratacaoSolo" value="Imediatamente, estou pronto para começar." required><span>Imediatamente, estou pronto para começar.</span></label>
+          <label class="choice"><input type="radio" name="prazoContratacaoSolo" value="Nos próximos 2 meses."><span>Nos próximos 2 meses.</span></label>
+          <label class="choice"><input type="radio" name="prazoContratacaoSolo" value="Nos próximos 6 meses."><span>Nos próximos 6 meses.</span></label>
+          <label class="choice"><input type="radio" name="prazoContratacaoSolo" value="Nos próximos 12 meses."><span>Nos próximos 12 meses.</span></label>
+          <label class="choice"><input type="radio" name="prazoContratacaoSolo" value="Ainda não tenho uma previsão."><span>Ainda não tenho uma previsão.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="solo" data-pure-choice="true">
+        <div class="kicker">Livro Solo · Pergunta 9 de 9</div>
+        <h2>Você é a pessoa responsável pela decisão e pelo investimento no projeto?</h2>
+        <div class="choices" data-group="decisorSolo">
+          <label class="choice"><input type="radio" name="decisorSolo" value="Sim, posso tomar a decisão e realizar o investimento." required><span>Sim, posso tomar a decisão e realizar o investimento.</span></label>
+          <label class="choice"><input type="radio" name="decisorSolo" value="Sim, mas preciso organizar meu planejamento financeiro."><span>Sim, mas preciso organizar meu planejamento financeiro.</span></label>
+          <label class="choice"><input type="radio" name="decisorSolo" value="A decisão será compartilhada com meu sócio, cônjuge ou outra pessoa."><span>A decisão será compartilhada com meu sócio, cônjuge ou outra pessoa.</span></label>
+          <label class="choice"><input type="radio" name="decisorSolo" value="Ainda não estou preparado para assumir esse compromisso."><span>Ainda não estou preparado para assumir esse compromisso.</span></label>
+        </div>
+      </div>
+
+      <!-- ===================== FLUXO B — COAUTORIA ===================== -->
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 1 de 8</div>
+        <h2>Em qual momento da sua carreira você está atualmente?</h2>
+        <div class="choices" data-group="momentoCarreiraCoautoria">
+          <label class="choice"><input type="radio" name="momentoCarreiraCoautoria" value="Sou reconhecido como referência na minha área de atuação." required><span>Sou reconhecido como referência na minha área de atuação.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraCoautoria" value="Tenho uma carreira consolidada e desejo ampliar minha visibilidade."><span>Tenho uma carreira consolidada e desejo ampliar minha visibilidade.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraCoautoria" value="Estou crescendo profissionalmente e buscando mais autoridade."><span>Estou crescendo profissionalmente e buscando mais autoridade.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraCoautoria" value="Estou iniciando minha trajetória profissional."><span>Estou iniciando minha trajetória profissional.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraCoautoria" value="Estou em transição de carreira e quero me reposicionar."><span>Estou em transição de carreira e quero me reposicionar.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 2 de 8</div>
+        <h2>O que mais desperta seu interesse em participar de um livro de coautoria?</h2>
+        <div class="choices" data-group="motivacaoCoautoria">
+          <label class="choice"><input type="radio" name="motivacaoCoautoria" value="Fortalecer minha autoridade e credibilidade profissional." required><span>Fortalecer minha autoridade e credibilidade profissional.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoCoautoria" value="Compartilhar meu conhecimento com um público maior."><span>Compartilhar meu conhecimento com um público maior.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoCoautoria" value="Fazer networking com profissionais reconhecidos."><span>Fazer networking com profissionais reconhecidos.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoCoautoria" value="Gerar novas oportunidades de negócios e palestras."><span>Gerar novas oportunidades de negócios e palestras.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoCoautoria" value="Realizar o sonho de participar de um livro."><span>Realizar o sonho de participar de um livro.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 3 de 8</div>
+        <h2>Qual é sua principal área de atuação?</h2>
+        <div class="choices" data-group="areaAtuacaoCoautoria">
+          <label class="choice"><input type="radio" name="areaAtuacaoCoautoria" value="Medicina e saúde." required><span>Medicina e saúde.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoCoautoria" value="Psicologia e neurodiversidade."><span>Psicologia e neurodiversidade.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoCoautoria" value="Educação e desenvolvimento humano."><span>Educação e desenvolvimento humano.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoCoautoria" value="Negócios, empreendedorismo e liderança."><span>Negócios, empreendedorismo e liderança.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoCoautoria" value="Direito, finanças ou consultoria."><span>Direito, finanças ou consultoria.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoCoautoria" value="Outra área."><span>Outra área.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 4 de 8</div>
+        <h2>Há quanto tempo você atua profissionalmente em sua área?</h2>
+        <div class="choices" data-group="tempoAtuacaoCoautoria">
+          <label class="choice"><input type="radio" name="tempoAtuacaoCoautoria" value="Menos de 3 anos." required><span>Menos de 3 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoCoautoria" value="De 3 a 5 anos."><span>De 3 a 5 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoCoautoria" value="De 6 a 10 anos."><span>De 6 a 10 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoCoautoria" value="De 11 a 20 anos."><span>De 11 a 20 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoCoautoria" value="Mais de 20 anos."><span>Mais de 20 anos.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 5 de 8</div>
+        <h2>Como está sua preparação para escrever um capítulo de livro?</h2>
+        <div class="choices" data-group="preparacaoCoautoria">
+          <label class="choice"><input type="radio" name="preparacaoCoautoria" value="Já tenho um texto ou conteúdo praticamente pronto." required><span>Já tenho um texto ou conteúdo praticamente pronto.</span></label>
+          <label class="choice"><input type="radio" name="preparacaoCoautoria" value="Tenho bastante conhecimento e sei sobre o que gostaria de escrever."><span>Tenho bastante conhecimento e sei sobre o que gostaria de escrever.</span></label>
+          <label class="choice"><input type="radio" name="preparacaoCoautoria" value="Tenho uma ideia, mas preciso de orientação para estruturar o capítulo."><span>Tenho uma ideia, mas preciso de orientação para estruturar o capítulo.</span></label>
+          <label class="choice"><input type="radio" name="preparacaoCoautoria" value="Ainda não sei sobre qual tema escreveria."><span>Ainda não sei sobre qual tema escreveria.</span></label>
+          <label class="choice"><input type="radio" name="preparacaoCoautoria" value="Gostaria de participar, mas tenho dúvidas sobre minha capacidade de escrever."><span>Gostaria de participar, mas tenho dúvidas sobre minha capacidade de escrever.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 6 de 8</div>
+        <h2>Quanto você tem disponível para investir em sua participação como coautor?</h2>
+        <div class="choices" data-group="investimentoCoautoria">
+          <label class="choice"><input type="radio" name="investimentoCoautoria" value="De R$ 7.501 a R$ 10.000." required><span>De R$ 7.501 a R$ 10.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoCoautoria" value="De R$ 5.001 a R$ 7.500."><span>De R$ 5.001 a R$ 7.500.</span></label>
+          <label class="choice"><input type="radio" name="investimentoCoautoria" value="De R$ 3.001 a R$ 5.000."><span>De R$ 3.001 a R$ 5.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoCoautoria" value="Até R$ 3.000."><span>Até R$ 3.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoCoautoria" value="Não tenho condições de investir no projeto neste momento."><span>Não tenho condições de investir no projeto neste momento.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 7 de 8</div>
+        <h2>Quando você gostaria de participar de um projeto de coautoria?</h2>
+        <div class="choices" data-group="prazoCoautoria">
+          <label class="choice"><input type="radio" name="prazoCoautoria" value="Imediatamente, se houver uma obra alinhada à minha especialidade." required><span>Imediatamente, se houver uma obra alinhada à minha especialidade.</span></label>
+          <label class="choice"><input type="radio" name="prazoCoautoria" value="Nos próximos 2 meses."><span>Nos próximos 2 meses.</span></label>
+          <label class="choice"><input type="radio" name="prazoCoautoria" value="Nos próximos 6 meses."><span>Nos próximos 6 meses.</span></label>
+          <label class="choice"><input type="radio" name="prazoCoautoria" value="Nos próximos 12 meses."><span>Nos próximos 12 meses.</span></label>
+          <label class="choice"><input type="radio" name="prazoCoautoria" value="Ainda estou pesquisando e não tenho prazo definido."><span>Ainda estou pesquisando e não tenho prazo definido.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="coautoria" data-pure-choice="true">
+        <div class="kicker">Coautoria · Pergunta 8 de 8</div>
+        <h2>O que seria mais importante para você ao escolher um projeto de coautoria?</h2>
+        <div class="choices" data-group="prioridadeCoautoria">
+          <label class="choice"><input type="radio" name="prioridadeCoautoria" value="Participar de uma obra coordenada por um profissional renomado." required><span>Participar de uma obra coordenada por um profissional renomado.</span></label>
+          <label class="choice"><input type="radio" name="prioridadeCoautoria" value="Publicar por uma editora reconhecida no mercado."><span>Publicar por uma editora reconhecida no mercado.</span></label>
+          <label class="choice"><input type="radio" name="prioridadeCoautoria" value="Participar de um lançamento e ampliar meu networking."><span>Participar de um lançamento e ampliar meu networking.</span></label>
+          <label class="choice"><input type="radio" name="prioridadeCoautoria" value="Ter suporte editorial para desenvolver meu capítulo."><span>Ter suporte editorial para desenvolver meu capítulo.</span></label>
+          <label class="choice"><input type="radio" name="prioridadeCoautoria" value="Encontrar um projeto que ofereça uma boa relação entre investimento e benefícios."><span>Encontrar um projeto que ofereça uma boa relação entre investimento e benefícios.</span></label>
+        </div>
+      </div>
+
+      <!-- ===================== INDECISO ===================== -->
+
+      <div class="step" data-flow="indeciso">
+        <div class="kicker">Sem problema</div>
+        <h2>Vamos descobrir juntos o melhor caminho</h2>
+        <p class="sub">Só mais algumas perguntas sobre você e sobre o que faz sentido investir agora — com isso já conseguimos apontar se solo ou coautoria combina mais com seu momento.</p>
+      </div>
+
+      <div class="step" data-flow="indeciso" data-pure-choice="true">
+        <div class="kicker">Seu perfil · Pergunta 1 de 5</div>
+        <h2>Em qual momento da sua carreira você está atualmente?</h2>
+        <div class="choices" data-group="momentoCarreiraComum">
+          <label class="choice"><input type="radio" name="momentoCarreiraComum" value="Estou consolidado na minha área e sou reconhecido como referência." required><span>Estou consolidado na minha área e sou reconhecido como referência.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraComum" value="Tenho uma carreira estabelecida, mas quero ampliar minha autoridade e visibilidade."><span>Tenho uma carreira estabelecida, mas quero ampliar minha autoridade e visibilidade.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraComum" value="Estou em fase de crescimento e quero me diferenciar profissionalmente."><span>Estou em fase de crescimento e quero me diferenciar profissionalmente.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraComum" value="Estou em transição de carreira ou iniciando uma nova fase."><span>Estou em transição de carreira ou iniciando uma nova fase.</span></label>
+          <label class="choice"><input type="radio" name="momentoCarreiraComum" value="Já encerrei minha carreira profissional e desejo compartilhar meu legado."><span>Já encerrei minha carreira profissional e desejo compartilhar meu legado.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="indeciso" data-pure-choice="true">
+        <div class="kicker">Seu perfil · Pergunta 2 de 5</div>
+        <h2>Qual é sua principal motivação para publicar um livro?</h2>
+        <div class="choices" data-group="motivacaoComum">
+          <label class="choice"><input type="radio" name="motivacaoComum" value="Tornar-me uma autoridade reconhecida na minha área de atuação." required><span>Tornar-me uma autoridade reconhecida na minha área de atuação.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoComum" value="Atrair mais clientes, pacientes ou oportunidades de negócios."><span>Atrair mais clientes, pacientes ou oportunidades de negócios.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoComum" value="Compartilhar meu conhecimento e impactar outras pessoas."><span>Compartilhar meu conhecimento e impactar outras pessoas.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoComum" value="Fortalecer minha marca pessoal e conquistar palestras e eventos."><span>Fortalecer minha marca pessoal e conquistar palestras e eventos.</span></label>
+          <label class="choice"><input type="radio" name="motivacaoComum" value="Realizar um sonho pessoal ou deixar um legado."><span>Realizar um sonho pessoal ou deixar um legado.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="indeciso" data-pure-choice="true">
+        <div class="kicker">Seu perfil · Pergunta 3 de 5</div>
+        <h2>Em qual área você atua profissionalmente?</h2>
+        <div class="choices" data-group="areaAtuacaoComum">
+          <label class="choice"><input type="radio" name="areaAtuacaoComum" value="Medicina e demais áreas da saúde." required><span>Medicina e demais áreas da saúde.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoComum" value="Psicologia, neurodiversidade e terapias."><span>Psicologia, neurodiversidade e terapias.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoComum" value="Negócios, empreendedorismo e liderança."><span>Negócios, empreendedorismo e liderança.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoComum" value="Educação e desenvolvimento humano."><span>Educação e desenvolvimento humano.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoComum" value="Direito, finanças ou consultoria."><span>Direito, finanças ou consultoria.</span></label>
+          <label class="choice"><input type="radio" name="areaAtuacaoComum" value="Outra área."><span>Outra área.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="indeciso" data-pure-choice="true">
+        <div class="kicker">Seu perfil · Pergunta 4 de 5</div>
+        <h2>Há quanto tempo você atua profissionalmente em sua área?</h2>
+        <div class="choices" data-group="tempoAtuacaoComum">
+          <label class="choice"><input type="radio" name="tempoAtuacaoComum" value="Menos de 3 anos." required><span>Menos de 3 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoComum" value="De 3 a 5 anos."><span>De 3 a 5 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoComum" value="De 6 a 10 anos."><span>De 6 a 10 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoComum" value="De 11 a 20 anos."><span>De 11 a 20 anos.</span></label>
+          <label class="choice"><input type="radio" name="tempoAtuacaoComum" value="Mais de 20 anos."><span>Mais de 20 anos.</span></label>
+        </div>
+      </div>
+
+      <div class="step" data-flow="indeciso" data-pure-choice="true">
+        <div class="kicker">Seu perfil · Pergunta 5 de 5</div>
+        <h2>Quanto você tem disponível pra investir nesse projeto agora?</h2>
+        <p class="sub">Essa resposta é o que vai apontar se solo ou coautoria combina mais com seu momento — não existe resposta certa ou errada.</p>
+        <div class="choices" data-group="investimentoComum">
+          <label class="choice"><input type="radio" name="investimentoComum" value="De R$ 40.001 a R$ 50.000." required><span>De R$ 40.001 a R$ 50.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="De R$ 30.001 a R$ 40.000."><span>De R$ 30.001 a R$ 40.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="De R$ 20.001 a R$ 30.000."><span>De R$ 20.001 a R$ 30.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="Até R$ 20.000."><span>Até R$ 20.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="De R$ 7.501 a R$ 10.000."><span>De R$ 7.501 a R$ 10.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="De R$ 5.001 a R$ 7.500."><span>De R$ 5.001 a R$ 7.500.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="De R$ 3.001 a R$ 5.000."><span>De R$ 3.001 a R$ 5.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="Até R$ 3.000."><span>Até R$ 3.000.</span></label>
+          <label class="choice"><input type="radio" name="investimentoComum" value="Não tenho condições de investir no projeto neste momento."><span>Não tenho condições de investir no projeto neste momento.</span></label>
+        </div>
+      </div>
+
+      <!-- ===================== TRANSIÇÃO SOLO -> COAUTORIA ===================== -->
+      <!-- Mostrada quando o investimento informado no fluxo solo é baixo demais
+           pra esse formato — a entrevista continua, só que pelas perguntas de
+           coautoria, que têm um ticket de entrada mais acessível. -->
+
+      <div class="step" data-flow="solo-to-coautoria">
+        <div class="kicker">Vamos ajustar o caminho</div>
+        <h2>Uma coautoria pode encaixar melhor no seu momento</h2>
+        <p class="sub">Pelo que você contou, um projeto de coautoria tende a ser mais aderente ao seu orçamento atual do que uma obra solo. Vamos só confirmar mais alguns pontos.</p>
+      </div>
+
+      <!-- ===================== FORMULÁRIO FINAL ===================== -->
+
+      <div class="step" data-flow="final">
+        <div class="kicker">Últimos dados</div>
+        <h2>Só mais alguns detalhes</h2>
+        <p class="sub">Confirma seus dados que um especialista entra em contato com os próximos passos.</p>
+        <label class="field"><span>E-mail</span>
+          <input type="email" name="email" required autocomplete="email" placeholder="voce@email.com">
+        </label>
+        <label class="field"><span>Instagram ou LinkedIn profissional (opcional)</span>
+          <input type="text" name="instagramLinkedin" placeholder="@seuperfil ou link do LinkedIn">
+        </label>
+        <label class="field"><span>Cidade e estado</span>
+          <input type="text" name="cidadeEstado" required placeholder="Ex: São Paulo, SP">
+        </label>
+        <label class="consent">
+          <input type="checkbox" name="consentimento" required>
+          <span>Autorizo contato comercial da Literare Books e estou de acordo com o tratamento dos meus dados conforme a Política de Privacidade.</span>
+        </label>
+      </div>
+
+      <div class="nav" id="nav">
+        <button type="button" class="btn-ghost" id="back">Voltar</button>
+        <button type="button" class="btn-primary" id="next" disabled>Continuar</button>
+      </div>
+    </form>
+
+    <div class="result" id="result">
+      <div class="loader" aria-hidden="true"><i></i><i></i><i></i></div>
+      <h2 id="loadingPhrase">Analisando suas respostas</h2>
+      <p class="sub" style="margin-bottom:0;">Se não abrir sozinho, <a id="waFallback" href="#" style="color:var(--accent-ink); font-weight:700;">clique aqui</a>.</p>
+    </div>
+
+    <div class="result" id="disqualified">
+      <h2>Talvez não seja a hora agora</h2>
+      <p class="sub" style="margin-bottom:0;">Pelo que você contou, este não parece ser o melhor momento pra avançar com um projeto editorial — e tudo bem. Quando fizer sentido pra você, será um prazer receber seu contato novamente.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var WHATSAPP_NUMBER = '5511989306713';
+  var WHATSAPP_MESSAGE = 'Oi! Acabei de preencher o questionário, e gostaria de mais informações!';
+  var LOADING_PHRASES = [
+    'Analisando suas respostas',
+    'Conectando você ao melhor especialista do seu perfil',
+    'Abrindo seu WhatsApp para ele te atender'
+  ];
+  var STORAGE_KEY = 'literareQuizSoloCoautoria';
+  var WEBHOOK_URL = 'https://api.datacrazy.io/v1/crm/api/crm/flows/webhooks/35ea6ad8-5c4c-44d2-b367-71d6955d52fb/ae8f6d46-2c21-4e89-bb64-e880a959a2ef';
+  var leadId = null;
+  try { leadId = localStorage.getItem(STORAGE_KEY + ':leadId'); } catch (e) {}
+  if (!leadId) {
+    leadId = 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    try { localStorage.setItem(STORAGE_KEY + ':leadId', leadId); } catch (e) {}
+  }
+
+  // UTM da campanha continua guardada — útil pra cruzar com o formato que o
+  // próprio lead escolheu na pergunta 1 (nem sempre vão bater 1:1).
+  var UTM_FIELDS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  function readUtms(){
+    var fromUrl = {};
+    var params = new URLSearchParams(window.location.search);
+    var hasAny = false;
+    UTM_FIELDS.forEach(function(k){
+      var v = params.get(k);
+      if (v) { fromUrl[k] = v; hasAny = true; }
+    });
+    if (hasAny) {
+      try { localStorage.setItem(STORAGE_KEY + ':utm', JSON.stringify(fromUrl)); } catch (e) {}
+      return fromUrl;
+    }
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY + ':utm');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {};
+  }
+  var utm = readUtms();
+
+  var FORMATO_SOLO = 'Livro solo: quero publicar uma obra de minha autoria, com meu nome na capa.';
+  var FORMATO_COAUTORIA = 'Coautoria: quero escrever um capítulo em um livro compartilhado com outros profissionais.';
+
+  // --- Qualificação: orçamento é quem decide se o lead segue no fluxo solo,
+  // migra pra coautoria no meio da entrevista, ou é desqualificado de vez.
+  var SOLO_ORCAMENTO_ALTO = ['De R$ 40.001 a R$ 50.000.', 'De R$ 30.001 a R$ 40.000.'];
+  var SOLO_ORCAMENTO_BAIXO_TROCA = ['Até R$ 20.000.', 'Não tenho condições de investir no projeto neste momento.'];
+  var SOLO_PRAZO_CURTO = ['Imediatamente, estou pronto para começar.', 'Nos próximos 2 meses.'];
+  var SOLO_DECISOR_CONFIRMADO = 'Sim, posso tomar a decisão e realizar o investimento.';
+
+  var COAUTORIA_ORCAMENTO_ALTO = ['De R$ 7.501 a R$ 10.000.', 'De R$ 5.001 a R$ 7.500.'];
+  var COAUTORIA_ORCAMENTO_ZERO = 'Não tenho condições de investir no projeto neste momento.';
+  var COAUTORIA_PRAZO_CURTO = ['Imediatamente, se houver uma obra alinhada à minha especialidade.', 'Nos próximos 2 meses.'];
+
+  // --- Triagem do lead indeciso: as 4 primeiras perguntas de Solo e Coautoria
+  // são a mesma coisa com redação diferente, então pro indeciso fazemos uma
+  // versão única delas + uma pergunta de orçamento combinando as duas escalas.
+  // A faixa escolhida decide pra qual fluxo a entrevista continua.
+  var SOLO_INVESTIMENTO_TODAS = ['De R$ 40.001 a R$ 50.000.', 'De R$ 30.001 a R$ 40.000.', 'De R$ 20.001 a R$ 30.000.', 'Até R$ 20.000.'];
+  var COAUTORIA_INVESTIMENTO_TODAS = ['De R$ 7.501 a R$ 10.000.', 'De R$ 5.001 a R$ 7.500.', 'De R$ 3.001 a R$ 5.000.', 'Até R$ 3.000.'];
+
+  // As 4 primeiras perguntas de Solo, Coautoria e da triagem do indeciso são
+  // a mesma pergunta de fundo (só a redação das opções muda por contexto) —
+  // esse mapa garante que a resposta sempre vá pro mesmo campo no webhook,
+  // não importa qual das três versões a pessoa respondeu.
+  var CAMPO_UNIFICADO = {
+    momentoCarreiraSolo: 'momentoCarreira', momentoCarreiraCoautoria: 'momentoCarreira', momentoCarreiraComum: 'momentoCarreira',
+    motivacaoSolo: 'motivacao', motivacaoCoautoria: 'motivacao', motivacaoComum: 'motivacao',
+    areaAtuacaoSolo: 'areaAtuacao', areaAtuacaoCoautoria: 'areaAtuacao', areaAtuacaoComum: 'areaAtuacao',
+    tempoAtuacaoSolo: 'tempoAtuacao', tempoAtuacaoCoautoria: 'tempoAtuacao', tempoAtuacaoComum: 'tempoAtuacao'
+  };
+
+  function computeClassificacao(a){
+    var viaCoautoria = (a.formato === FORMATO_COAUTORIA) || !!a.trocadoParaCoautoria;
+
+    if (viaCoautoria) {
+      if (a.investimentoCoautoria === undefined) return null;
+      if (a.investimentoCoautoria === COAUTORIA_ORCAMENTO_ZERO) return 'Lead Desqualificado';
+      var prazoOkC = COAUTORIA_PRAZO_CURTO.indexOf(a.prazoCoautoria) !== -1;
+      var orcamentoAltoC = COAUTORIA_ORCAMENTO_ALTO.indexOf(a.investimentoCoautoria) !== -1;
+      return (orcamentoAltoC && prazoOkC) ? 'Lead Bom Coautoria' : 'Lead Morno Coautoria';
+    }
+
+    if (a.formato === FORMATO_SOLO) {
+      if (a.investimentoSolo === undefined) return null;
+      var prazoOkS = SOLO_PRAZO_CURTO.indexOf(a.prazoContratacaoSolo) !== -1;
+      var decisorOkS = a.decisorSolo === SOLO_DECISOR_CONFIRMADO;
+      var orcamentoAltoS = SOLO_ORCAMENTO_ALTO.indexOf(a.investimentoSolo) !== -1;
+      return (orcamentoAltoS && prazoOkS && decisorOkS) ? 'Lead Quente Solo' : 'Lead Morno Solo';
+    }
+
+    return null; // indeciso — ainda sem critério de qualificação
+  }
+
+  var allSteps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var introStep = document.querySelector('.step[data-contact-intro]');
+  var step0 = document.querySelector('.step[data-step0]');
+  var soloSteps = allSteps.filter(function(s){ return s.getAttribute('data-flow') === 'solo'; });
+  var coautoriaSteps = allSteps.filter(function(s){ return s.getAttribute('data-flow') === 'coautoria'; });
+  var indecisoSteps = allSteps.filter(function(s){ return s.getAttribute('data-flow') === 'indeciso'; });
+  var transicaoSteps = allSteps.filter(function(s){ return s.getAttribute('data-flow') === 'solo-to-coautoria'; });
+  var finalSteps = allSteps.filter(function(s){ return s.getAttribute('data-flow') === 'final'; });
+
+  var progressEl = document.getElementById('progress');
+  var form = document.getElementById('quiz');
+  var navEl = document.getElementById('nav');
+  var nextBtn = document.getElementById('next');
+  var backBtn = document.getElementById('back');
+  var resultEl = document.getElementById('result');
+  var disqualifiedEl = document.getElementById('disqualified');
+  var current = 0;
+  var answers = {};
+  var advanceTimer = null;
+  var path = [introStep, step0];
+
+  function rebuildProgressDots(){
+    progressEl.innerHTML = '';
+    path.forEach(function(){
+      var dot = document.createElement('i');
+      progressEl.appendChild(dot);
+    });
+  }
+  rebuildProgressDots();
+
+  function rebuildPath(formato){
+    if (formato === FORMATO_SOLO) path = [introStep, step0].concat(soloSteps, finalSteps);
+    else if (formato === FORMATO_COAUTORIA) path = [introStep, step0].concat(coautoriaSteps, finalSteps);
+    else path = [introStep, step0].concat(indecisoSteps, finalSteps);
+    rebuildProgressDots();
+  }
+
+  // Troca de fluxo no meio da entrevista: o lead escolheu Solo, mas o
+  // orçamento que ele informou não fecha pra esse formato. Corta o que
+  // faltava do roteiro de Solo e emenda a transição + as perguntas de
+  // Coautoria que ainda não foram feitas, sem repetir o que já foi.
+  function switchToCoautoriaMidflow(){
+    answers.trocadoParaCoautoria = true;
+    path = path.slice(0, current + 1).concat(transicaoSteps, coautoriaSteps.slice(4), finalSteps);
+    rebuildProgressDots();
+    persist();
+  }
+
+  // Resolve o indeciso assim que ele informa o orçamento: decide Solo ou
+  // Coautoria pela faixa escolhida (ou desqualifica, se for zero) e emenda
+  // só as perguntas que ainda faltam daquele fluxo. momentoCarreira,
+  // motivacao, areaAtuacao e tempoAtuacao já foram respondidas na triagem
+  // única — como o campo é o mesmo em qualquer fluxo (ver CAMPO_UNIFICADO),
+  // não precisa copiar nem perguntar de novo.
+  function resolveIndeciso(valor){
+    var pathSoFar = path.slice(0, current + 1);
+    if (SOLO_INVESTIMENTO_TODAS.indexOf(valor) !== -1) {
+      answers.formato = FORMATO_SOLO;
+      answers.investimentoSolo = valor;
+      if (SOLO_ORCAMENTO_BAIXO_TROCA.indexOf(valor) !== -1) {
+        answers.trocadoParaCoautoria = true;
+        path = pathSoFar.concat(transicaoSteps, coautoriaSteps.slice(4), finalSteps);
+      } else {
+        path = pathSoFar.concat(soloSteps.slice(4, 6), soloSteps.slice(7, 9), finalSteps);
+      }
+    } else if (COAUTORIA_INVESTIMENTO_TODAS.indexOf(valor) !== -1) {
+      answers.formato = FORMATO_COAUTORIA;
+      answers.investimentoCoautoria = valor;
+      path = pathSoFar.concat([coautoriaSteps[4]], coautoriaSteps.slice(6, 8), finalSteps);
+    }
+    rebuildProgressDots();
+    persist();
+  }
+
+  function fieldsOf(step){
+    return Array.prototype.slice.call(step.querySelectorAll('input,textarea,select'));
+  }
+
+  function isPureChoice(step){
+    return step.getAttribute('data-pure-choice') === 'true';
+  }
+
+  function stepValid(step){
+    var group = step.querySelector('[data-group]');
+    var groupOk = group ? !!step.querySelector('[data-group] input:checked') : true;
+    if (!groupOk) return false;
+    var fields = fieldsOf(step).filter(function(f){ return f.type !== 'radio'; });
+    return fields.every(function(f){
+      if (f.type === 'checkbox') return f.checked;
+      if (!f.hasAttribute('required')) return true;
+      return f.value.trim() !== '';
+    });
+  }
+
+  // --- autosave local (recuperar progresso em caso de reload) ---
+  function persist(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers: answers, step: current, ts: Date.now() })); }
+    catch (e) {}
+  }
+
+  function buildPayload(completed){
+    return {
+      leadId: leadId,
+      completed: !!completed,
+      step: current,
+      formato: answers.formato || null,
+      classificacao: computeClassificacao(answers),
+      answers: answers,
+      utm: utm,
+      origem: 'quiz-solo-coautoria',
+      ts: new Date().toISOString()
+    };
+  }
+
+  var finished = false;
+  var abandonSent = false;
+  try { abandonSent = localStorage.getItem(STORAGE_KEY + ':abandonSent') === '1'; } catch (e) {}
+
+  // Nome + WhatsApp já vêm logo no primeiro passo, então o lead fica
+  // recuperável assim que ele preenche isso — mesmo se abandonar antes
+  // de escolher o formato ou chegar no formulário final.
+  function hasMinimalLead(){
+    return !!(answers.nome && answers.telefone);
+  }
+
+  function sendCompleted(){
+    if (!WEBHOOK_URL || finished) return;
+    finished = true;
+    try {
+      fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildPayload(true)),
+        keepalive: true
+      }).catch(function(){});
+    } catch (e) {}
+  }
+
+  function sendAbandonOnce(){
+    if (!WEBHOOK_URL || finished || abandonSent || !hasMinimalLead()) return;
+    abandonSent = true;
+    try { localStorage.setItem(STORAGE_KEY + ':abandonSent', '1'); } catch (e) {}
+    var body = JSON.stringify(buildPayload(false));
+    var sent = false;
+    if (navigator.sendBeacon) {
+      try { sent = navigator.sendBeacon(WEBHOOK_URL, new Blob([body], { type: 'application/json' })); }
+      catch (e) { sent = false; }
+    }
+    if (!sent) {
+      try {
+        fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function(){});
+      } catch (e) {}
+    }
+  }
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') sendAbandonOnce();
+  });
+  window.addEventListener('pagehide', sendAbandonOnce);
+
+  function restore(){
+    var raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var saved;
+    try { saved = JSON.parse(raw); } catch (e) { return; }
+    if (!saved || !saved.answers) return;
+    answers = saved.answers;
+    if (answers.trocadoParaCoautoria) {
+      path = [introStep, step0].concat(soloSteps.slice(0, 7), transicaoSteps, coautoriaSteps.slice(4), finalSteps);
+      rebuildProgressDots();
+    } else if (answers.formato) {
+      rebuildPath(answers.formato);
+    }
+    Array.prototype.forEach.call(form.elements, function(f){
+      if (!f.name) return;
+      var key = CAMPO_UNIFICADO[f.name] || f.name;
+      if (!(key in answers)) return;
+      if (f.type === 'radio') { f.checked = (f.value === answers[key]); }
+      else if (f.type === 'checkbox') { f.checked = !!answers[key]; }
+      else { f.value = answers[key]; }
+    });
+    document.querySelectorAll('.choice').forEach(function(c){
+      var input = c.querySelector('input');
+      c.classList.toggle('checked', !!(input && input.checked));
+    });
+    current = Math.min(saved.step || 0, path.length - 1);
+    while (current > 0 && !stepValid(path[current - 1])) current--;
+  }
+
+  function updateNextState(){
+    nextBtn.disabled = !stepValid(path[current]);
+  }
+
+  function render(){
+    allSteps.forEach(function(s){ s.classList.remove('active'); });
+    path[current].classList.add('active');
+    Array.prototype.forEach.call(progressEl.children, function(dot, i){
+      dot.classList.toggle('on', i <= current);
+    });
+    backBtn.style.visibility = current === 0 ? 'hidden' : 'visible';
+    navEl.style.display = 'flex';
+    nextBtn.style.display = isPureChoice(path[current]) ? 'none' : '';
+    updateNextState();
+  }
+
+  function captureStep(step){
+    fieldsOf(step).forEach(function(f){
+      var key = CAMPO_UNIFICADO[f.name] || f.name;
+      if (f.type === 'radio') { if (f.checked) answers[key] = f.value; }
+      else if (f.type === 'checkbox') { answers[key] = f.checked; }
+      else { answers[key] = f.value.trim(); }
+    });
+  }
+
+  function goNext(){
+    if (current < path.length - 1) {
+      current++;
+      render();
+    } else {
+      finish();
+    }
+  }
+
+  form.addEventListener('input', function(e){
+    if (e.target.type !== 'radio') { captureStep(path[current]); persist(); }
+    updateNextState();
+  });
+
+  form.addEventListener('change', function(e){
+    var choice = e.target.closest('.choice');
+    if (!choice) {
+      if (e.target.type === 'checkbox') { captureStep(path[current]); persist(); updateNextState(); }
+      return;
+    }
+    var group = choice.closest('[data-group]');
+    group.querySelectorAll('.choice').forEach(function(c){ c.classList.remove('checked'); });
+    choice.classList.add('checked');
+
+    var isFormatRouter = path[current] === step0;
+    var fieldName = e.target.name;
+    var fieldValue = e.target.value;
+    captureStep(path[current]);
+    if (isFormatRouter) rebuildPath(answers.formato);
+    persist();
+    updateNextState();
+
+    // Orçamento zerado pra coautoria é piso: não existe formato mais barato
+    // pra oferecer, então o lead é desqualificado ali mesmo, sem ir pro
+    // formulário final nem pro CRM.
+    if (fieldName === 'investimentoCoautoria' && fieldValue === COAUTORIA_ORCAMENTO_ZERO) {
+      clearTimeout(advanceTimer);
+      endDisqualified();
+      return;
+    }
+
+    // Orçamento baixo no fluxo solo não desqualifica — só muda a conversa
+    // pra coautoria, que tem ticket de entrada mais acessível.
+    if (fieldName === 'investimentoSolo' && SOLO_ORCAMENTO_BAIXO_TROCA.indexOf(fieldValue) !== -1) {
+      switchToCoautoriaMidflow();
+    }
+
+    // Orçamento zerado na pergunta combinada do indeciso é o mesmo piso.
+    if (fieldName === 'investimentoComum' && fieldValue === COAUTORIA_ORCAMENTO_ZERO) {
+      clearTimeout(advanceTimer);
+      endDisqualified();
+      return;
+    }
+
+    // Resolve pra qual fluxo o indeciso segue assim que ele informa o
+    // orçamento combinado (pergunta de triagem).
+    if (fieldName === 'investimentoComum') {
+      resolveIndeciso(fieldValue);
+    }
+
+    if (isPureChoice(path[current])) {
+      clearTimeout(advanceTimer);
+      advanceTimer = setTimeout(goNext, 380);
+    }
+  });
+
+  backBtn.addEventListener('click', function(){
+    clearTimeout(advanceTimer);
+    if (current > 0) { current--; render(); }
+  });
+
+  nextBtn.addEventListener('click', function(){
+    if (!stepValid(path[current])) return;
+    captureStep(path[current]);
+    persist();
+    goNext();
+  });
+
+  function finish(){
+    sendCompleted();
+    form.style.display = 'none';
+    progressEl.style.display = 'none';
+    resultEl.classList.add('active');
+
+    var url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(WHATSAPP_MESSAGE);
+    document.getElementById('waFallback').href = url;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY + ':leadId');
+      localStorage.removeItem(STORAGE_KEY + ':utm');
+      localStorage.removeItem(STORAGE_KEY + ':abandonSent');
+    } catch (e) {}
+
+    var phraseEl = document.getElementById('loadingPhrase');
+    var i = 0;
+    var STEP_MS = 2200;
+    var timer = setInterval(function(){
+      i++;
+      if (i >= LOADING_PHRASES.length) { clearInterval(timer); return; }
+      phraseEl.classList.remove('swap');
+      phraseEl.textContent = LOADING_PHRASES[i];
+      void phraseEl.offsetWidth;
+      phraseEl.classList.add('swap');
+    }, STEP_MS);
+
+    setTimeout(function(){ window.location.href = url; }, STEP_MS * LOADING_PHRASES.length);
+  }
+
+  // Lead sem orçamento nem pra coautoria: não vai pro CRM, não pede mais
+  // dados, não redireciona pro WhatsApp — só agradece e encerra ali.
+  function endDisqualified(){
+    finished = true;
+    form.style.display = 'none';
+    progressEl.style.display = 'none';
+    disqualifiedEl.classList.add('active');
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY + ':leadId');
+      localStorage.removeItem(STORAGE_KEY + ':utm');
+      localStorage.removeItem(STORAGE_KEY + ':abandonSent');
+    } catch (e) {}
+  }
+
+  restore();
+  render();
+})();
+</script>
