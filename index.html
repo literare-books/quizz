@@ -666,6 +666,7 @@
   // não precisa copiar nem perguntar de novo.
   function resolveIndeciso(valor){
     var pathSoFar = path.slice(0, current + 1);
+    delete answers.investimentoComum; // só servia pra decidir o fluxo, não é campo final
     if (SOLO_INVESTIMENTO_TODAS.indexOf(valor) !== -1) {
       answers.formato = FORMATO_SOLO;
       answers.investimentoSolo = valor;
