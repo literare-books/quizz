@@ -553,6 +553,21 @@ src="https://www.facebook.com/tr?id=1152599630533727&ev=PageView&noscript=1"
   ];
   var STORAGE_KEY = 'literareQuizSoloCoautoria';
   var WEBHOOK_URL = 'https://api.datacrazy.io/v1/crm/api/crm/flows/webhooks/35ea6ad8-5c4c-44d2-b367-71d6955d52fb/ae8f6d46-2c21-4e89-bb64-e880a959a2ef';
+  // Backup próprio (planilha), em paralelo ao webhook do CRM — não conta pro
+  // limite de webhooks da conta do CRM por ser um serviço separado.
+  var BACKUP_URL = 'https://script.google.com/macros/s/AKfycbwocbkN3pxhAGChb0CIOUw7Oxoiak6tOhmiukmEV9wBqP_kwHIqNjxS6E2hndZtexMf/exec';
+  function sendBackup(payload){
+    if (!BACKUP_URL) return;
+    try {
+      fetch(BACKUP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+        keepalive: true
+      }).catch(function(){});
+    } catch (e) {}
+  }
   var leadId = null;
   try { leadId = localStorage.getItem(STORAGE_KEY + ':leadId'); } catch (e) {}
   if (!leadId) {
@@ -767,23 +782,29 @@ src="https://www.facebook.com/tr?id=1152599630533727&ev=PageView&noscript=1"
   }
 
   function sendCompleted(){
-    if (!WEBHOOK_URL || finished) return;
+    if (finished) return;
     finished = true;
+    var payload = buildPayload(true);
+    sendBackup(payload);
+    if (!WEBHOOK_URL) return;
     try {
       fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload(true)),
+        body: JSON.stringify(payload),
         keepalive: true
       }).catch(function(){});
     } catch (e) {}
   }
 
   function sendAbandonOnce(){
-    if (!WEBHOOK_URL || finished || abandonSent || !hasMinimalLead()) return;
+    if (finished || abandonSent || !hasMinimalLead()) return;
     abandonSent = true;
     try { localStorage.setItem(STORAGE_KEY + ':abandonSent', '1'); } catch (e) {}
-    var body = JSON.stringify(buildPayload(false));
+    var payload = buildPayload(false);
+    sendBackup(payload);
+    if (!WEBHOOK_URL) return;
+    var body = JSON.stringify(payload);
     var sent = false;
     if (navigator.sendBeacon) {
       try { sent = navigator.sendBeacon(WEBHOOK_URL, new Blob([body], { type: 'application/json' })); }
