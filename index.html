@@ -553,6 +553,23 @@ src="https://www.facebook.com/tr?id=1152599630533727&ev=PageView&noscript=1"
   ];
   var STORAGE_KEY = 'literareQuizSoloCoautoria';
   var WEBHOOK_URL = 'https://api.datacrazy.io/v1/crm/api/crm/flows/webhooks/35ea6ad8-5c4c-44d2-b367-71d6955d52fb/ae8f6d46-2c21-4e89-bb64-e880a959a2ef';
+  var PIXEL_SOLO_ID = '2066524140658560';
+  var PIXEL_COAUTORIA_ID = '1152599630533727';
+  // Dispara o evento customizado de lead qualificado nos DOIS pixels (cruzado),
+  // assim que o orçamento informado fecha pro fluxo em questão — não espera
+  // o fim do quiz. 'solo' = Solo com orçamento >= R$20k; 'coautoria' =
+  // Coautoria (direto ou rebaixado do Solo) com orçamento >= R$3k.
+  var qualifiedLeadSent = { solo: false, coautoria: false };
+  function fireQualifiedLead(tipo){
+    if (qualifiedLeadSent[tipo]) return;
+    qualifiedLeadSent[tipo] = true;
+    if (typeof fbq !== 'function') return;
+    var eventName = tipo === 'solo' ? 'Lead_Solo' : 'Lead_Coautoria';
+    try {
+      fbq('trackSingleCustom', PIXEL_SOLO_ID, eventName);
+      fbq('trackSingleCustom', PIXEL_COAUTORIA_ID, eventName);
+    } catch (e) {}
+  }
   // Backup próprio (planilha), em paralelo ao webhook do CRM — não conta pro
   // limite de webhooks da conta do CRM por ser um serviço separado.
   var BACKUP_URL = 'https://script.google.com/macros/s/AKfycbxiPjWO6kjqGRGFJmNutY_FTCT967YmcvDWyrzTHR_K6awZuQzA-xqYPtdfZm2sz8o2/exec';
@@ -719,11 +736,13 @@ src="https://www.facebook.com/tr?id=1152599630533727&ev=PageView&noscript=1"
         answers.trocadoParaCoautoria = true;
         path = pathSoFar.concat(transicaoSteps, coautoriaSteps.slice(4), finalSteps);
       } else {
+        fireQualifiedLead('solo');
         path = pathSoFar.concat(soloSteps.slice(4, 6), soloSteps.slice(7, 9), finalSteps);
       }
     } else if (COAUTORIA_INVESTIMENTO_TODAS.indexOf(valor) !== -1) {
       answers.formato = FORMATO_COAUTORIA;
       answers.investimento = valor;
+      fireQualifiedLead('coautoria');
       path = pathSoFar.concat([coautoriaSteps[4]], coautoriaSteps.slice(6, 8), finalSteps);
     }
     rebuildProgressDots();
@@ -918,10 +937,19 @@ src="https://www.facebook.com/tr?id=1152599630533727&ev=PageView&noscript=1"
       return;
     }
 
+    // Orçamento >= R$3k pra coautoria (direto ou após rebaixamento do Solo)
+    // já é um lead qualificado pro Meta aprender com — dispara na hora.
+    if (fieldName === 'investimentoCoautoria') {
+      fireQualifiedLead('coautoria');
+    }
+
     // Orçamento baixo no fluxo solo não desqualifica — só muda a conversa
     // pra coautoria, que tem ticket de entrada mais acessível.
     if (fieldName === 'investimentoSolo' && SOLO_ORCAMENTO_BAIXO_TROCA.indexOf(fieldValue) !== -1) {
       switchToCoautoriaMidflow();
+    } else if (fieldName === 'investimentoSolo') {
+      // Orçamento >= R$20k pra Solo: lead qualificado, dispara na hora.
+      fireQualifiedLead('solo');
     }
 
     // Orçamento zerado na pergunta combinada do indeciso é o mesmo piso.
